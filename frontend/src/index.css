@@ -1,0 +1,87 @@
+/* ═══════════════════════════════════════════════════════════
+   VaxChain — Global Styles
+   Tema: Medical Tech / Clean Dark
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  --bg-primary:    #0a0f1e;
+  --bg-secondary:  #111827;
+  --bg-card:       #1a2332;
+  --bg-card-hover: #1e2a3d;
+
+  --accent-blue:   #3b82f6;
+  --accent-cyan:   #06b6d4;
+  --accent-green:  #10b981;
+  --accent-red:    #ef4444;
+  --accent-yellow: #f59e0b;
+
+  --text-primary:  #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted:    #4b5563;
+
+  --border:        #1e293b;
+  --border-active: #3b82f6;
+
+  --font-main: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-main);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; }
+::-webkit-scrollbar-track  { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 3px; }
+
+/* ── Headings ──────────────────────────────────────────── */
+h1, h2, h3 { line-height: 1.2; font-weight: 700; }
+
+/* ── Links ─────────────────────────────────────────────── */
+a { color: var(--accent-blue); text-decoration: none; }
+
+/* ── Button resets ─────────────────────────────────────── */
+button {
+  font-family: var(--font-main);
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+input, textarea, select {
+  font-family: var(--font-main);
+  outline: none;
+}
+
+/* ── Animations ────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(59,130,246,0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.fade-in { animation: fadeIn 0.4s ease forwards; }
+.spin     { animation: spin 1s linear infinite; }

@@ -1,0 +1,121 @@
+{
+  "address": "0x0000000000000000000000000000000000000000",
+  "_note": "File ini akan otomatis di-update setelah menjalankan deploy script. Jalankan: npx hardhat run scripts/deploy.js --network localhost",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true,  "name": "issuer",       "type": "address" },
+        { "indexed": false, "name": "facilityName", "type": "string"  }
+      ],
+      "name": "IssuerAuthorized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "name": "issuer", "type": "address" }
+      ],
+      "name": "IssuerRemoved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true,  "name": "hashData",     "type": "bytes32" },
+        { "indexed": true,  "name": "issuer",        "type": "address" },
+        { "indexed": false, "name": "facilityName",  "type": "string"  },
+        { "indexed": false, "name": "timestamp",     "type": "uint256" }
+      ],
+      "name": "RecordAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true,  "name": "hashData",  "type": "bytes32" },
+        { "indexed": true,  "name": "revokedBy", "type": "address" },
+        { "indexed": false, "name": "timestamp", "type": "uint256" }
+      ],
+      "name": "RecordRevoked",
+      "type": "event"
+    },
+    {
+      "inputs": [{ "name": "hashData", "type": "bytes32" }],
+      "name": "addVaccineRecord",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "name": "issuer", "type": "address" },
+        { "name": "name",   "type": "string"  }
+      ],
+      "name": "authorizeIssuer",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "name": "addr", "type": "address" }],
+      "name": "isAuthorizedIssuer",
+      "outputs": [{ "type": "bool" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "name": "", "type": "address" }],
+      "name": "issuerNames",
+      "outputs": [{ "type": "string" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [{ "type": "address" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "name": "issuer", "type": "address" }],
+      "name": "removeIssuer",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "name": "hashData", "type": "bytes32" }],
+      "name": "revokeCertificate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalRecords",
+      "outputs": [{ "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "name": "hashData", "type": "bytes32" }],
+      "name": "verifyRecord",
+      "outputs": [
+        { "name": "isValid",      "type": "bool"    },
+        { "name": "issuer",       "type": "address" },
+        { "name": "facilityName", "type": "string"  },
+        { "name": "timestamp",    "type": "uint256" },
+        { "name": "statusCode",   "type": "uint8"   }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}
