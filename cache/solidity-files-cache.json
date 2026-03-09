@@ -1,0 +1,41 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "D:\\Jason\\Kuliah\\SEM 6\\Blockchain\\MidTermProject\\VaksinDigitalDApps\\contracts\\VaccineRegistry.sol": {
+      "lastModificationDate": 1772781057086,
+      "contentHash": "76ab2ad0dc25f3e3d530c963db636314",
+      "sourceName": "contracts/VaccineRegistry.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "VaccineRegistry"
+      ]
+    }
+  }
+}

@@ -1,10 +1,10 @@
-# 🛡️ VaxChain — DApps Rekam Vaksin Digital Terverifikasi
+#  VaxChain — DApps Rekam Vaksin Digital Terverifikasi
 
-> **Tugas Mata Kuliah Blockchain** — Jonathan, Raphael, Jason, Daniel
+> **Tugas Mata Kuliah Blockchain** — Jonathan Albertus Widjaja, Raphael Yoshua Echad, Jason Nathan Winarko, Daniel Sean Wesley Karamoy
 
 ---
 
-## 📦 Struktur Project
+##  Struktur Project
 
 ```
 vaccine-dapp/
@@ -35,7 +35,7 @@ vaccine-dapp/
 
 ---
 
-## 🚀 Cara Menjalankan (Step by Step)
+##  Cara Menjalankan (Step by Step)
 
 ### LANGKAH 0: Persiapan
 
@@ -89,9 +89,9 @@ npx hardhat run scripts/deploy.js --network localhost
 
 Output sukses:
 ```
-✅ VaccineRegistry deployed to: 0x5FbDB2315678afecb367f032d93F642f64180aa3
-📁 ABI & address saved to frontend/src/abi/VaccineRegistry.json
-📁 .env saved to frontend/.env
+ VaccineRegistry deployed to: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+ ABI & address saved to frontend/src/abi/VaccineRegistry.json
+ .env saved to frontend/.env
 ```
 
 ### LANGKAH 5: Jalankan Frontend
@@ -123,7 +123,7 @@ Buka browser: **http://localhost:5173**
 
 ---
 
-## 🌐 Deploy ke Polygon Amoy Testnet (Gratis!)
+##  Deploy ke Polygon Amoy Testnet (Gratis!)
 
 ### 1. Dapatkan MATIC gratis
 - Buka: https://faucet.polygon.technology/
@@ -136,7 +136,7 @@ PRIVATE_KEY=0x_private_key_metamask_kamu_disini
 POLYGON_AMOY_RPC=https://rpc-amoy.polygon.technology/
 ```
 
-> ⚠️ **JANGAN** commit `.env` ke GitHub! Tambahkan ke `.gitignore`
+>  **JANGAN** commit `.env` ke GitHub! Tambahkan ke `.gitignore`
 
 ### 3. Deploy
 ```bash
@@ -151,23 +151,23 @@ npx hardhat run scripts/deploy.js --network polygonAmoy
 
 ---
 
-## 🧪 Menjalankan Test
+##  Menjalankan Test
 
 ```bash
 npx hardhat test
 ```
 
 Test mencakup:
-- ✅ Deployment & initial state
-- ✅ Manajemen issuer (authorize, remove)
-- ✅ Pencatatan vaksin (addVaccineRecord)
-- ✅ Verifikasi sertifikat
-- ✅ Revoke sertifikat
-- ✅ Access control (non-issuer ditolak)
+-  Deployment & initial state
+-  Manajemen issuer (authorize, remove)
+-  Pencatatan vaksin (addVaccineRecord)
+-  Verifikasi sertifikat
+-  Revoke sertifikat
+-  Access control (non-issuer ditolak)
 
 ---
 
-## 🔑 Cara Kerja Hash
+##  Cara Kerja Hash
 
 Data pasien TIDAK disimpan mentah di blockchain. Alurnya:
 
@@ -186,7 +186,7 @@ Keuntungan:
 
 ---
 
-## 👥 Peran dalam Sistem
+##  Peran dalam Sistem
 
 | Peran | Bisa Apa |
 |-------|----------|
@@ -196,7 +196,7 @@ Keuntungan:
 
 ---
 
-## ❓ FAQ Troubleshooting
+##  FAQ Troubleshooting
 
 **Q: MetaMask menolak koneksi?**
 A: Pastikan Chain ID = 31337 dan RPC URL = http://127.0.0.1:8545

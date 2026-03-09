@@ -1,6 +1,8 @@
 {
-  "address": "0x0000000000000000000000000000000000000000",
-  "_note": "File ini akan otomatis di-update setelah menjalankan deploy script. Jalankan: npx hardhat run scripts/deploy.js --network localhost",
+  "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "network": "31337",
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "timestamp": "2026-03-09T09:19:13.280Z",
   "abi": [
     {
       "inputs": [],
@@ -10,8 +12,18 @@
     {
       "anonymous": false,
       "inputs": [
-        { "indexed": true,  "name": "issuer",       "type": "address" },
-        { "indexed": false, "name": "facilityName", "type": "string"  }
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "issuer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "facilityName",
+          "type": "string"
+        }
       ],
       "name": "IssuerAuthorized",
       "type": "event"
@@ -19,7 +31,12 @@
     {
       "anonymous": false,
       "inputs": [
-        { "indexed": true, "name": "issuer", "type": "address" }
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "issuer",
+          "type": "address"
+        }
       ],
       "name": "IssuerRemoved",
       "type": "event"
@@ -27,10 +44,30 @@
     {
       "anonymous": false,
       "inputs": [
-        { "indexed": true,  "name": "hashData",     "type": "bytes32" },
-        { "indexed": true,  "name": "issuer",        "type": "address" },
-        { "indexed": false, "name": "facilityName",  "type": "string"  },
-        { "indexed": false, "name": "timestamp",     "type": "uint256" }
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "hashData",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "issuer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "facilityName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
       ],
       "name": "RecordAdded",
       "type": "event"
@@ -38,15 +75,36 @@
     {
       "anonymous": false,
       "inputs": [
-        { "indexed": true,  "name": "hashData",  "type": "bytes32" },
-        { "indexed": true,  "name": "revokedBy", "type": "address" },
-        { "indexed": false, "name": "timestamp", "type": "uint256" }
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "hashData",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "revokedBy",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
       ],
       "name": "RecordRevoked",
       "type": "event"
     },
     {
-      "inputs": [{ "name": "hashData", "type": "bytes32" }],
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "hashData",
+          "type": "bytes32"
+        }
+      ],
       "name": "addVaccineRecord",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -54,8 +112,16 @@
     },
     {
       "inputs": [
-        { "name": "issuer", "type": "address" },
-        { "name": "name",   "type": "string"  }
+        {
+          "internalType": "address",
+          "name": "issuer",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        }
       ],
       "name": "authorizeIssuer",
       "outputs": [],
@@ -63,35 +129,96 @@
       "type": "function"
     },
     {
-      "inputs": [{ "name": "addr", "type": "address" }],
-      "name": "isAuthorizedIssuer",
-      "outputs": [{ "type": "bool" }],
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "authorizedIssuers",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
       "stateMutability": "view",
       "type": "function"
     },
     {
-      "inputs": [{ "name": "", "type": "address" }],
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        }
+      ],
+      "name": "isAuthorizedIssuer",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
       "name": "issuerNames",
-      "outputs": [{ "type": "string" }],
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "owner",
-      "outputs": [{ "type": "address" }],
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
       "stateMutability": "view",
       "type": "function"
     },
     {
-      "inputs": [{ "name": "issuer", "type": "address" }],
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "issuer",
+          "type": "address"
+        }
+      ],
       "name": "removeIssuer",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
-      "inputs": [{ "name": "hashData", "type": "bytes32" }],
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "hashData",
+          "type": "bytes32"
+        }
+      ],
       "name": "revokeCertificate",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -100,19 +227,51 @@
     {
       "inputs": [],
       "name": "totalRecords",
-      "outputs": [{ "type": "uint256" }],
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
       "stateMutability": "view",
       "type": "function"
     },
     {
-      "inputs": [{ "name": "hashData", "type": "bytes32" }],
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "hashData",
+          "type": "bytes32"
+        }
+      ],
       "name": "verifyRecord",
       "outputs": [
-        { "name": "isValid",      "type": "bool"    },
-        { "name": "issuer",       "type": "address" },
-        { "name": "facilityName", "type": "string"  },
-        { "name": "timestamp",    "type": "uint256" },
-        { "name": "statusCode",   "type": "uint8"   }
+        {
+          "internalType": "bool",
+          "name": "isValid",
+          "type": "bool"
+        },
+        {
+          "internalType": "address",
+          "name": "issuer",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "facilityName",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "statusCode",
+          "type": "uint8"
+        }
       ],
       "stateMutability": "view",
       "type": "function"
