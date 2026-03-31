@@ -16,26 +16,7 @@ export const SUPPORTED_CHAINS = {
   137:   { name: "Polygon Mainnet",  rpc: "https://polygon-rpc.com" },
 };
 
-// ── Koneksi MetaMask ─────────────────────────────────────────────────────────
-
-/**
- * Minta akses ke MetaMask dan kembalikan provider + signer
- */
-export async function connectMetaMask() {
-  if (!window.ethereum) {
-    throw new Error("MetaMask tidak ditemukan. Silakan install MetaMask terlebih dahulu.");
-  }
-
-  // Minta permission akses akun
-  await window.ethereum.request({ method: "eth_requestAccounts" });
-
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer   = await provider.getSigner();
-  const address  = await signer.getAddress();
-  const network  = await provider.getNetwork();
-
-  return { provider, signer, address, chainId: Number(network.chainId) };
-}
+// ── Instance Kontrak ─────────────────────────────────────────────────────────
 
 /**
  * Kembalikan instance kontrak (dengan signer untuk write, tanpa untuk read-only)
@@ -49,68 +30,100 @@ export function getContract(signerOrProvider) {
 /**
  * Buat hash dari data vaksin pasien
  * Hash ini yang disimpan ke blockchain (bukan data mentah)
- *
- * @param {string} nik           - Nomor Induk Kependudukan
- * @param {string} jenisVaksin   - Nama vaksin (misal: "Sinovac")
- * @param {string} kodeProduksi  - Nomor batch/lot vaksin
- * @param {string} tanggal       - Tanggal vaksinasi (YYYY-MM-DD)
- * @param {string} salt          - Nilai acak unik (UUID) — SIMPAN INI!
- * @returns {string}  Hash dalam format 0x...
  */
 export function generateVaccineHash(nik, jenisVaksin, kodeProduksi, tanggal, salt) {
   const rawData = `${nik}|${jenisVaksin}|${kodeProduksi}|${tanggal}|${salt}`;
   return ethers.keccak256(ethers.toUtf8Bytes(rawData));
 }
 
-/**
- * Generate UUID v4 sebagai salt
- */
 export function generateSalt() {
   return crypto.randomUUID();
 }
 
-// ── Fungsi Kontrak ────────────────────────────────────────────────────────────
+// ── Fungsi-Fungsi Kontrak ──────────────────────────────────────────────────────
 
 /**
- * Catat rekam vaksin ke blockchain
- * @param signer - ethers Signer (dari MetaMask)
- * @param hashData - bytes32 hash
- * @returns tx receipt
+ * Catat rekam vaksin tunggal (Mint NFT)
  */
-export async function addVaccineRecord(signer, hashData) {
+export async function addVaccineRecord(signer, patientAddress, dataHash, vaccineType) {
   const contract = getContract(signer);
-  const tx = await contract.addVaccineRecord(hashData);
-  return await tx.wait(); // Tunggu konfirmasi
-}
-
-/**
- * Verifikasi sertifikat vaksin
- * @param provider - ethers Provider
- * @param hashData - bytes32 hash dari sertifikat
- */
-export async function verifyRecord(provider, hashData) {
-  const contract = getContract(provider);
-  const result   = await contract.verifyRecord(hashData);
-  return {
-    isValid:      result.isValid,
-    issuer:       result.issuer,
-    facilityName: result.facilityName,
-    timestamp:    Number(result.timestamp),
-    statusCode:   Number(result.statusCode),
-  };
-}
-
-/**
- * Revoke sertifikat
- */
-export async function revokeCertificate(signer, hashData) {
-  const contract = getContract(signer);
-  const tx = await contract.revokeCertificate(hashData);
+  const tx = await contract.addVaccineRecord(patientAddress, dataHash, vaccineType);
   return await tx.wait();
 }
 
 /**
- * Daftarkan issuer baru (hanya owner)
+ * Tambahkan Merkle Root untuk batch upload
+ */
+export async function addBatchRoot(signer, root) {
+  const contract = getContract(signer);
+  const tx = await contract.addBatchRoot(root);
+  return await tx.wait();
+}
+
+/**
+ * Klaim sertifikat dari batch menggunakan proof
+ */
+export async function claimCertificate(signer, proof, root, dataHash, vaccineType) {
+  const contract = getContract(signer);
+  const tx = await contract.claimCertificate(proof, root, dataHash, vaccineType);
+  return await tx.wait();
+}
+
+/**
+ * Ambil metadata NFT (termasuk SVG Base64)
+ */
+export async function getTokenMetadata(provider, tokenId) {
+  const contract = getContract(provider);
+  const uri = await contract.tokenURI(tokenId);
+  
+  if (uri.startsWith("data:application/json;base64,")) {
+    const json = atob(uri.split(",")[1]);
+    return JSON.parse(json);
+  }
+  return null;
+}
+
+/**
+ * Ambil semua ID sertifikat yang dimiliki oleh sebuah alamat
+ */
+export async function getOwnedCertificates(provider, address) {
+  const contract = getContract(provider);
+  // Karena ERC721 standar tidak ada function list by owner tanpa Enumerable, 
+  // kita listen ke transfer events atau brute force per totalRecords untuk demo.
+  // Cara paling efisien di demo: Query events.
+  const filter = contract.filters.Transfer(null, address);
+  const events = await contract.queryFilter(filter);
+  return events.map(e => e.args.tokenId);
+}
+
+/**
+ * Verifikasi sertifikat vaksin (Old way for legacy hashes or specific lookup)
+ */
+export async function verifyRecordByTokenId(provider, tokenId) {
+  const contract = getContract(provider);
+  const rec = await contract.records(tokenId);
+  return {
+    isValid:      Number(rec.status) === 1,
+    issuer:       rec.issuer,
+    facilityName: rec.facilityName,
+    timestamp:    Number(rec.timestamp),
+    statusCode:   Number(rec.status),
+    vaccineType:  rec.vaccineType,
+    dataHash:     rec.dataHash
+  };
+}
+
+/**
+ * Revoke sertifikat (NFT)
+ */
+export async function revokeCertificate(signer, tokenId) {
+  const contract = getContract(signer);
+  const tx = await contract.revokeCertificate(tokenId);
+  return await tx.wait();
+}
+
+/**
+ * Manajemen Issuer
  */
 export async function authorizeIssuer(signer, address, facilityName) {
   const contract = getContract(signer);
@@ -118,42 +131,30 @@ export async function authorizeIssuer(signer, address, facilityName) {
   return await tx.wait();
 }
 
-/**
- * Hapus issuer (hanya owner)
- */
 export async function removeIssuer(signer, address) {
   const contract = getContract(signer);
   const tx = await contract.removeIssuer(address);
   return await tx.wait();
 }
 
-/**
- * Cek apakah alamat adalah authorized issuer
- */
 export async function checkIsIssuer(provider, address) {
+  if (!address) return false;
   const contract = getContract(provider);
-  return await contract.isAuthorizedIssuer(address);
+  return await contract.authorizedIssuers(address);
 }
 
-/**
- * Ambil nama fasilitas dari alamat
- */
 export async function getIssuerName(provider, address) {
   const contract = getContract(provider);
   return await contract.issuerNames(address);
 }
 
-/**
- * Ambil owner kontrak
- */
 export async function getOwner(provider) {
   const contract = getContract(provider);
   return await contract.owner();
 }
 
-/**
- * Format timestamp Unix ke string lokal Indonesia
- */
+// ── Utils ────────────────────────────────────────────────────────────────────
+
 export function formatTimestamp(unixTimestamp) {
   if (!unixTimestamp) return "-";
   return new Date(unixTimestamp * 1000).toLocaleString("id-ID", {
@@ -165,9 +166,6 @@ export function formatTimestamp(unixTimestamp) {
   });
 }
 
-/**
- * Potong alamat wallet: 0x1234...abcd
- */
 export function shortAddress(addr) {
   if (!addr) return "-";
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;

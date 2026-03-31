@@ -1,298 +1,195 @@
 // src/components/AddRecord.jsx
-// Komponen untuk mencatat vaksinasi baru ke blockchain
-
-import { useState } from "react";
-import {
-  addVaccineRecord,
-  generateVaccineHash,
-  generateSalt,
+import { useState, useEffect } from "react";
+import { 
+  addVaccineRecord, 
+  addBatchRoot,
+  generateVaccineHash, 
+  generateSalt 
 } from "../utils/contract";
+import { buildMerkleTree, getRoot, getProof } from "../utils/merkleHelper";
 
 const JENIS_VAKSIN = [
-  "Sinovac (CoronaVac)",
-  "AstraZeneca (Vaxzevria)",
-  "Pfizer-BioNTech (Comirnaty)",
-  "Moderna (Spikevax)",
-  "Janssen (Johnson & Johnson)",
-  "Sinopharm",
-  "Vaksin Meningitis",
-  "Vaksin Influenza",
-  "Vaksin Hepatitis B",
-  "Lainnya",
+  "Sinovac (CoronaVac)", "AstraZeneca", "Pfizer", "Moderna", "Sinopharm", "Meningitis", "Influenza"
 ];
 
 export default function AddRecord({ signer, issuerAddress }) {
+  const [mode, setMode] = useState("single"); // "single" | "bulk"
   const [form, setForm] = useState({
-    nik:          "",
-    namaVaksin:   "",
-    kodeProduksi: "",
-    tanggal:      new Date().toISOString().split("T")[0],
+    patientAddress: "", nik: "", namaVaksin: "", kodeProduksi: "",
+    tanggal: new Date().toISOString().split("T")[0],
   });
-  const [status, setStatus] = useState(null); // null | loading | success | error
+  
+  const [bulkData, setBulkData] = useState("");
+  const [status, setStatus] = useState(null);
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleSubmit = async () => {
-    // Validasi
-    if (!form.nik || !form.namaVaksin || !form.kodeProduksi || !form.tanggal) {
-      setErrorMsg("Semua field wajib diisi!");
-      return;
-    }
-    if (form.nik.length !== 16 || !/^\d+$/.test(form.nik)) {
-      setErrorMsg("NIK harus terdiri dari 16 digit angka.");
-      return;
-    }
-
+  // ── Single Mint ──────────────────────────────────────────────────────────
+  const handleSingleSubmit = async () => {
+    if (!form.patientAddress || !form.nik || !form.namaVaksin) return setErrorMsg("Sediakan data lengkap!");
+    
     setStatus("loading");
     setErrorMsg("");
-    setResult(null);
-
     try {
-      // 1. Generate salt unik
       const salt = generateSalt();
-
-      // 2. Hash data (NIK tidak masuk ke blockchain mentah!)
-      const hashData = generateVaccineHash(
-        form.nik,
-        form.namaVaksin,
-        form.kodeProduksi,
-        form.tanggal,
-        salt
-      );
-
-      // 3. Kirim ke blockchain
-      const receipt = await addVaccineRecord(signer, hashData);
-
-      setResult({
-        hash:         hashData,
-        salt,
-        txHash:       receipt.hash,
-        blockNumber:  receipt.blockNumber,
-        rawData: `${form.nik}|${form.namaVaksin}|${form.kodeProduksi}|${form.tanggal}|${salt}`,
-      });
+      const hashData = generateVaccineHash(form.nik, form.namaVaksin, form.kodeProduksi, form.tanggal, salt);
+      
+      const receipt = await addVaccineRecord(signer, form.patientAddress, hashData, form.namaVaksin);
+      
+      setResult({ type: "single", hash: hashData, txHash: receipt.hash, patient: form.patientAddress });
       setStatus("success");
-
-      // Reset form
-      setForm({
-        nik: "", namaVaksin: "", kodeProduksi: "",
-        tanggal: new Date().toISOString().split("T")[0],
-      });
     } catch (e) {
-      console.error(e);
-      setErrorMsg(e.reason || e.message || "Transaksi gagal");
+      setErrorMsg(e.message);
+      setStatus("error");
+    }
+  };
+
+  // ── Bulk Upload (Merkle) ────────────────────────────────────────────────
+  const handleBulkSubmit = async () => {
+    try {
+      const lines = bulkData.trim().split("\n");
+      if (lines.length < 1) return setErrorMsg("Data bulk kosong!");
+      
+      setStatus("loading");
+      // Format: address,nik,vaksin,batch,tanggal
+      const records = lines.map(line => {
+        const [addr, nik, vax, batch, date] = line.split(",").map(s => s?.trim());
+        const salt = generateSalt();
+        const hash = generateVaccineHash(nik, vax, batch, date, salt);
+        return { patientAddress: addr, dataHash: hash, vaccineType: vax, nik, batch, date, salt };
+      });
+
+      const tree = buildMerkleTree(records);
+      const root = getRoot(tree);
+
+      const receipt = await addBatchRoot(signer, root);
+
+      // Simpan proof ke localStorage (Simulasi database klaim)
+      const existingClaims = JSON.parse(localStorage.getItem("vax_claims") || "[]");
+      const newClaims = records.map(rec => ({
+        ...rec,
+        root,
+        proof: getProof(tree, rec)
+      }));
+      localStorage.setItem("vax_claims", JSON.stringify([...existingClaims, ...newClaims]));
+
+      setResult({ type: "bulk", root, txHash: receipt.hash, count: records.length });
+      setStatus("success");
+      setBulkData("");
+    } catch (e) {
+      setErrorMsg(e.message);
       setStatus("error");
     }
   };
 
   return (
     <div style={s.container}>
-      <h2 style={s.title}>
-        <span style={s.titleIcon}>💉</span>
-        Catat Rekam Vaksin Baru
-      </h2>
-      <p style={s.subtitle}>
-        Data pasien akan di-<em>hash</em> sebelum disimpan. NIK tidak pernah muncul di blockchain.
-      </p>
-
-      {/* ── Form ─────────────────────────────────────────────────────────── */}
-      <div style={s.form}>
-        <Field
-          label="NIK Pasien"
-          hint="16 digit Nomor Induk Kependudukan"
-          required
-        >
-          <input
-            style={s.input}
-            name="nik"
-            value={form.nik}
-            onChange={handleChange}
-            placeholder="3201234567890001"
-            maxLength={16}
-            pattern="\d*"
-          />
-        </Field>
-
-        <Field label="Jenis Vaksin" required>
-          <select style={s.input} name="namaVaksin" value={form.namaVaksin} onChange={handleChange}>
-            <option value="">-- Pilih Jenis Vaksin --</option>
-            {JENIS_VAKSIN.map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-        </Field>
-
-        <Field
-          label="Kode Produksi / Nomor Batch"
-          hint="Tertera pada kemasan vaksin"
-          required
-        >
-          <input
-            style={s.input}
-            name="kodeProduksi"
-            value={form.kodeProduksi}
-            onChange={handleChange}
-            placeholder="BATCH-001 / LOT-XYZ123"
-          />
-        </Field>
-
-        <Field label="Tanggal Vaksinasi" required>
-          <input
-            style={s.input}
-            type="date"
-            name="tanggal"
-            value={form.tanggal}
-            onChange={handleChange}
-          />
-        </Field>
+      <div style={s.tabHeader}>
+        <button style={{...s.tab, ...(mode === "single" ? s.tabActive : {})}} onClick={() => setMode("single")}>Single Mint (Instant NFT)</button>
+        <button style={{...s.tab, ...(mode === "bulk" ? s.tabActive : {})}} onClick={() => setMode("bulk")}>Batch Upload (Merkle Scaling)</button>
       </div>
 
-      {/* ── Error ────────────────────────────────────────────────────────── */}
-      {errorMsg && (
-        <div style={s.errorBox}>⚠️ {errorMsg}</div>
+      {mode === "single" ? (
+        <div style={s.formGrid}>
+          <Field label="Alamat Wallet Pasien (Privy Address)">
+            <input style={s.input} name="patientAddress" value={form.patientAddress} onChange={handleChange} placeholder="0x..." />
+          </Field>
+          <Field label="NIK Pasien (16 digit)">
+            <input style={s.input} name="nik" value={form.nik} onChange={handleChange} placeholder="320..." maxLength={16} />
+          </Field>
+          <Field label="Jenis Vaksin">
+            <select style={s.input} name="namaVaksin" value={form.namaVaksin} onChange={handleChange}>
+              <option value="">-- Pilih --</option>
+              {JENIS_VAKSIN.map(v => <option key={v} value={v}>{v}</option>)}
+            </select>
+          </Field>
+          <Field label="Batch Number">
+            <input style={s.input} name="kodeProduksi" value={form.kodeProduksi} onChange={handleChange} placeholder="B-001" />
+          </Field>
+          <button style={s.btn} onClick={handleSingleSubmit} disabled={status === "loading"}>Kirim Sertifikat NFT</button>
+        </div>
+      ) : (
+        <div style={s.bulkCont}>
+          <p style={s.hint}>Format CSV: <code>address,nik,vaksin,batch,tanggal</code> (satu per baris)</p>
+          <textarea 
+            style={s.textarea} 
+            value={bulkData} 
+            onChange={(e) => setBulkData(e.target.value)}
+            placeholder="0x123...,320123...,Sinovac,B-01,2024-03-31"
+          />
+          <button style={s.btn} onClick={handleBulkSubmit} disabled={status === "loading"}>Submit Batch & Simpan Merkle Root</button>
+        </div>
       )}
 
-      {/* ── Submit ───────────────────────────────────────────────────────── */}
-      <button
-        style={{
-          ...s.btn,
-          opacity: status === "loading" ? 0.7 : 1,
-        }}
-        onClick={handleSubmit}
-        disabled={status === "loading"}
-      >
-        {status === "loading" ? (
-          <>
-            <span style={s.spinner} />
-            Mengirim ke Blockchain...
-          </>
-        ) : (
-          "✅ Catat ke Blockchain"
-        )}
-      </button>
-
-      {/* ── Hasil sukses ─────────────────────────────────────────────────── */}
+      {errorMsg && <div style={s.err}>{errorMsg}</div>}
       {status === "success" && result && (
-        <div style={s.successBox} className="fade-in">
-          <div style={s.successHeader}>🎉 Rekam Vaksin Berhasil Dicatat!</div>
-
-          <InfoRow label="Hash Sertifikat" value={result.hash} mono copy />
-          <InfoRow label="Salt (SIMPAN INI!)" value={result.salt} mono copy
-            hint="Salt diperlukan untuk membuktikan kepemilikan. Simpan di tempat aman!" />
-          <InfoRow label="Transaction Hash" value={result.txHash} mono />
-          <InfoRow label="Block Number" value={result.blockNumber?.toString()} />
-
-          <div style={s.warningBox}>
-            ⚠️ <strong>PENTING:</strong> Simpan salt di atas dengan aman. Salt + data asli
-            diperlukan untuk verifikasi manual kepemilikan sertifikat.
-          </div>
+        <div style={s.success}>
+          {result.type === "single" ? (
+            <>NFT Berhasil Dikirim ke {shortAddress(result.patient)}! (Tx: {shortAddress(result.txHash)})</>
+          ) : (
+            <div style={s.merkleSummary}>
+              <h4 style={s.summaryTitle}>🌳 Merkle Tree Generated</h4>
+              <div style={s.summaryRoot}>Root: <code>{result.root}</code></div>
+              <p style={s.summaryText}>Berhasil memadatkan {result.count} data menjadi 1 Root Hash!</p>
+              
+              <div style={s.treeVisual}>
+                <div style={s.treeNode}>Root</div>
+                <div style={s.treeLine}>/ \</div>
+                <div style={s.treeLeaves}>
+                  {result.count > 4 ? (
+                    <>
+                      <div style={s.leaf}>Leaf 1</div>
+                      <div style={s.leaf}>Leaf 2</div>
+                      <div style={s.leaf}>...</div>
+                      <div style={s.leaf}>Leaf {result.count}</div>
+                    </>
+                  ) : (
+                    Array.from({length: result.count}).map((_, i) => (
+                      <div key={i} style={s.leaf}>Leaf {i+1}</div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div style={s.txInfo}>Transaction: {shortAddress(result.txHash)}</div>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-// ── Komponen kecil ────────────────────────────────────────────────────────────
-function Field({ label, hint, required, children }) {
-  return (
-    <div style={s.field}>
-      <label style={s.label}>
-        {label} {required && <span style={{ color: "#ef4444" }}>*</span>}
-      </label>
-      {hint && <span style={s.hint}>{hint}</span>}
-      {children}
-    </div>
-  );
+function Field({ label, children }) {
+  return <div style={s.field}><label style={s.label}>{label}</label>{children}</div>;
 }
 
-function InfoRow({ label, value, mono, copy, hint }) {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  return (
-    <div style={s.infoRow}>
-      <div style={s.infoLabel}>{label}</div>
-      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-        <div style={{ ...s.infoValue, fontFamily: mono ? "'JetBrains Mono', monospace" : "inherit" }}>
-          {value}
-        </div>
-        {copy && (
-          <button style={s.copyBtn} onClick={handleCopy}>
-            {copied ? "✓" : "⎘"}
-          </button>
-        )}
-      </div>
-      {hint && <div style={s.infoHint}>{hint}</div>}
-    </div>
-  );
-}
+function shortAddress(a) { return a ? `${a.slice(0,6)}...${a.slice(-4)}` : ""; }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 const s = {
   container: { display: "flex", flexDirection: "column", gap: "20px" },
-  title: {
-    fontSize: "20px", fontWeight: 700,
-    display: "flex", alignItems: "center", gap: "10px",
-  },
-  titleIcon: { fontSize: "24px" },
-  subtitle: { color: "#64748b", fontSize: "14px" },
-  form: {
-    display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px",
-    padding: "24px", borderRadius: "12px",
-    background: "#111827", border: "1px solid #1e293b",
-  },
-  field: { display: "flex", flexDirection: "column", gap: "4px" },
-  label: { fontSize: "13px", fontWeight: 600, color: "#94a3b8" },
-  hint:  { fontSize: "11px", color: "#4b5563" },
-  input: {
-    padding: "10px 14px", borderRadius: "8px",
-    background: "#1a2332", border: "1px solid #1e293b",
-    color: "#f1f5f9", fontSize: "14px",
-    transition: "border-color 0.15s",
-  },
-  btn: {
-    display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-    padding: "14px", borderRadius: "10px",
-    background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
-    color: "white", fontSize: "15px", fontWeight: 700,
-    cursor: "pointer",
-  },
-  spinner: {
-    width: "16px", height: "16px", borderRadius: "50%",
-    border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white",
-    animation: "spin 0.8s linear infinite", display: "inline-block",
-  },
-  errorBox: {
-    padding: "12px 16px", borderRadius: "8px",
-    background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
-    color: "#fca5a5", fontSize: "14px",
-  },
-  successBox: {
-    padding: "20px", borderRadius: "12px",
-    background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)",
-    display: "flex", flexDirection: "column", gap: "12px",
-  },
-  successHeader: {
-    fontSize: "16px", fontWeight: 700, color: "#10b981", marginBottom: "4px",
-  },
-  infoRow: {
-    padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)",
-    display: "flex", flexDirection: "column", gap: "4px",
-  },
-  infoLabel: { fontSize: "11px", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" },
-  infoValue: { fontSize: "13px", color: "#94a3b8", wordBreak: "break-all" },
-  infoHint:  { fontSize: "11px", color: "#f59e0b" },
-  copyBtn: {
-    padding: "4px 8px", borderRadius: "4px", fontSize: "14px",
-    background: "#1e293b", color: "#94a3b8", cursor: "pointer", flexShrink: 0,
-  },
-  warningBox: {
-    padding: "12px", borderRadius: "8px", fontSize: "13px",
-    background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
-    color: "#fcd34d",
-  },
+  tabHeader: { display: "flex", gap: "10px", borderBottom: "1px solid #1e293b", paddingBottom: "10px" },
+  tab: { padding: "8px 16px", background: "none", color: "#64748b", cursor: "pointer", border: "none" },
+  tabActive: { color: "#10b981", fontWeight: 700, borderBottom: "2px solid #10b981" },
+  formGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", background: "#111827", padding: "20px", borderRadius: "12px" },
+  field: { display: "flex", flexDirection: "column", gap: "6px" },
+  label: { fontSize: "12px", color: "#94a3b8" },
+  input: { padding: "10px", background: "#1a2332", border: "1px solid #1e293b", color: "white", borderRadius: "8px" },
+  btn: { gridColumn: "span 2", padding: "12px", background: "#10b981", color: "white", fontWeight: 700, borderRadius: "8px", marginTop: "10px" },
+  err: { color: "#ef4444", fontSize: "14px" },
+  success: { padding: "16px", background: "rgba(16,185,129,0.1)", color: "#10b981", borderRadius: "8px", border: "1px solid #10b981" },
+  bulkCont: { display: "flex", flexDirection: "column", gap: "12px" },
+  textarea: { height: "150px", background: "#111827", color: "white", padding: "12px", border: "1px solid #1e293b", borderRadius: "8px", fontFamily: "monospace" },
+  hint: { fontSize: "12px", color: "#64748b" },
+
+  // Merkle summary styles
+  merkleSummary: { display: "flex", flexDirection: "column", gap: "10px", textAlign: "center" },
+  summaryTitle: { fontSize: "16px", fontWeight: 700, color: "#10b981", margin: 0 },
+  summaryRoot: { fontSize: "11px", background: "#1a2332", padding: "8px", borderRadius: "6px", wordBreak: "break-all" },
+  treeVisual: { background: "rgba(0,0,0,0.1)", padding: "16px", borderRadius: "10px", margin: "10px 0" },
+  treeNode: { fontSize: "12px", fontWeight: 700, color: "#3b82f6" },
+  treeLeaves: { display: "flex", justifyContent: "center", gap: "10px", marginTop: "4px" },
+  leaf: { fontSize: "10px", padding: "4px 8px", background: "#334155", borderRadius: "4px" },
+  summaryText: { fontSize: "13px", color: "#94a3b8" },
 };
