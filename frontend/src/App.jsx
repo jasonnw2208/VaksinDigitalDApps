@@ -66,18 +66,39 @@ export default function App() {
   const [error, setError]             = useState("");
 
   // ── Simulasi Demo Login ──────────────────────────────────────────────────
-  const loginSocial = async () => {
-    // Simulasi Login Tanpa API External
-    setConnecting(true);
-    setTimeout(() => {
-      setAuthenticated(true);
-      // Gunakan akun default dari Hardhat untuk demo (Akun #9 - 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720)
-      // untuk mendemonstrasikan UI warga biasa. 
-      // Untuk Issuer, mintalah user klik MetaMask ke akun RS/Faskes.
-      initWallet("0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"); 
-      setConnecting(false);
-    }, 1000);
-  };
+const loginSocial = async () => {
+  setConnecting(true);
+  try {
+    const SOCIAL_PRIVATE_KEY = "0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6";
+    const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
+    const socialWallet = new ethers.Wallet(SOCIAL_PRIVATE_KEY, provider);
+    const network = await provider.getNetwork();
+
+    const address = socialWallet.address;
+    const chainId = Number(network.chainId);
+
+    const [issuer, owner, name] = await Promise.all([
+      checkIsIssuer(provider, address),
+      getOwner(provider),
+      getIssuerName(provider, address),
+    ]);
+
+    // Set langsung — tidak panggil initWallet agar signer tidak tertimpa MetaMask
+    setWallet({ provider, signer: socialWallet, address, chainId });
+    setIsIssuer(issuer);
+    setIsOwner(owner.toLowerCase() === address.toLowerCase());
+    setFacilityName(name || "");
+    setAuthenticated(true);
+
+    if (issuer) setActiveTab("add");
+    else setActiveTab("my-nfts");
+  } catch (e) {
+    console.error(e);
+    setError("Gagal Social Login.");
+  } finally {
+    setConnecting(false);
+  }
+};
 
   const connectMetaMask = async () => {
     if (!window.ethereum) return setError("MetaMask tidak ditemukan.");
