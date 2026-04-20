@@ -17,43 +17,48 @@ export function getContract(signerOrProvider) {
 
 // ── Hashing ───────────────────────────────────────────────────────────────────
 
-/** Hash data vaksin lengkap (disimpan ke blockchain) */
 export function generateVaccineHash(nik, jenisVaksin, kodeProduksi, tanggal, salt) {
-  const raw = `${nik}|${jenisVaksin}|${kodeProduksi}|${tanggal}|${salt}`;
-  return ethers.keccak256(ethers.toUtf8Bytes(raw));
+  return ethers.keccak256(ethers.toUtf8Bytes(`${nik}|${jenisVaksin}|${kodeProduksi}|${tanggal}|${salt}`));
 }
 
-/** Hash NIK saja (untuk mapping pasien, tidak menyimpan NIK asli) */
 export function generateNikHash(nik) {
   return ethers.keccak256(ethers.toUtf8Bytes(nik));
 }
 
-/** Generate UUID v4 sebagai salt */
 export function generateSalt() {
   return crypto.randomUUID();
 }
 
-// ── Fungsi Kontrak — Issuer ───────────────────────────────────────────────────
+// ── Issuer ────────────────────────────────────────────────────────────────────
 
-/**
- * Catat rekam vaksin ke blockchain
- * @param signer     - ethers Signer
- * @param hashData   - hash data vaksin lengkap
- * @param nikHash    - hash NIK pasien (untuk mapping)
- */
-export async function addVaccineRecord(signer, hashData, nikHash) {
+export async function addVaccineRecord(signer, patient, dataHash, vaccineType, nikHash) {
   const contract = getContract(signer);
-  const tx = await contract.addVaccineRecord(hashData, nikHash);
+  const tx = await contract.addVaccineRecord(patient, dataHash, vaccineType, nikHash);
   return await tx.wait();
 }
 
-export async function revokeCertificate(signer, hashData) {
+export async function addBatchRoot(signer, root) {
   const contract = getContract(signer);
-  const tx = await contract.revokeCertificate(hashData);
+  const tx = await contract.addBatchRoot(root);
   return await tx.wait();
 }
 
-// ── Fungsi Kontrak — Admin ────────────────────────────────────────────────────
+export async function claimCertificate(signer, proof, root, dataHash, vaccineType, nikHash) {
+  const contract = getContract(signer);
+  const tx = await contract.claimCertificate(
+    proof, root, dataHash, vaccineType,
+    nikHash || ethers.ZeroHash
+  );
+  return await tx.wait();
+}
+
+export async function revokeCertificate(signer, tokenId) {
+  const contract = getContract(signer);
+  const tx = await contract.revokeCertificate(tokenId);
+  return await tx.wait();
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
 
 export async function authorizeIssuer(signer, address, facilityName) {
   const contract = getContract(signer);
@@ -67,72 +72,101 @@ export async function removeIssuer(signer, address) {
   return await tx.wait();
 }
 
-/**
- * Reset binding NIK pasien (hanya owner/faskes)
- * Digunakan saat pasien lupa akun Google / ganti akun sosial
- */
 export async function resetNikBinding(signer, walletAddress) {
   const contract = getContract(signer);
   const tx = await contract.resetNikBinding(walletAddress);
   return await tx.wait();
 }
 
-// ── Fungsi Kontrak — Pasien ───────────────────────────────────────────────────
+// ── NIK Binding ───────────────────────────────────────────────────────────────
 
-/**
- * Pasien ikat wallet ke NIK mereka (sekali saja)
- * Jika sudah terikat sebelumnya, akan throw error dari contract
- */
 export async function bindNik(signer, nikHash) {
   const contract = getContract(signer);
   const tx = await contract.bindNik(nikHash);
   return await tx.wait();
 }
 
-/**
- * Ambil semua record hash milik satu NIK
- */
-export async function getRecordsByNik(provider, nikHash) {
+export async function getTokensByNik(provider, nikHash) {
   const contract = getContract(provider);
-  return await contract.getRecordsByNik(nikHash);
+  return await contract.getTokensByNik(nikHash);
 }
 
-/**
- * Cek apakah wallet sudah terikat ke NIK
- * Returns bytes32(0) jika belum terikat
- */
 export async function getNikHashByWallet(provider, walletAddress) {
-  const contract = getContract(provider);
-  return await contract.getNikHashByWallet(walletAddress);
+  try {
+    const contract = getContract(provider);
+    return await contract.getNikHashByWallet(walletAddress);
+  } catch {
+    return null;
+  }
 }
 
-// ── Fungsi Kontrak — Publik ───────────────────────────────────────────────────
+// ── NFT ───────────────────────────────────────────────────────────────────────
 
-export async function verifyRecord(provider, hashData) {
+export async function getTokenMetadata(provider, tokenId) {
+  try {
+    const contract = getContract(provider);
+    const uri = await contract.tokenURI(tokenId);
+    if (uri.startsWith("data:application/json;base64,")) {
+      return JSON.parse(atob(uri.split(",")[1]));
+    }
+  } catch {}
+  return { name: `VaxChain #${tokenId}`, image: "", attributes: [] };
+}
+
+/**
+ * Ambil semua token ID yang dimiliki address
+ * Menggunakan ownerOf loop (reliable untuk local/testnet)
+ */
+export async function getOwnedCertificates(provider, address) {
+  try {
+    const contract = getContract(provider);
+    const total    = Number(await contract.nextTokenId());
+    const owned    = [];
+    for (let i = 0; i < total; i++) {
+      try {
+        const owner = await contract.ownerOf(i);
+        if (owner.toLowerCase() === address.toLowerCase()) {
+          owned.push(i);
+        }
+      } catch {}
+    }
+    return owned;
+  } catch {
+    return [];
+  }
+}
+
+export async function getRecordByTokenId(provider, tokenId) {
   const contract = getContract(provider);
-  const result   = await contract.verifyRecord(hashData);
+  const rec = await contract.records(tokenId);
   return {
-    isValid:      result.isValid,
-    issuer:       result.issuer,
-    facilityName: result.facilityName,
-    timestamp:    Number(result.timestamp),
-    statusCode:   Number(result.statusCode),
+    isValid:      Number(rec.status) === 1,
+    issuer:       rec.issuer,
+    facilityName: rec.facilityName,
+    vaccineType:  rec.vaccineType,
+    timestamp:    Number(rec.timestamp),
+    statusCode:   Number(rec.status),
+    dataHash:     rec.dataHash,
   };
 }
 
+// Alias untuk VerifyRecord.jsx
+export async function verifyRecord(provider, tokenId) {
+  return await getRecordByTokenId(provider, Number(tokenId));
+}
+
+// ── Publik ────────────────────────────────────────────────────────────────────
+
 export async function checkIsIssuer(provider, address) {
-  const contract = getContract(provider);
-  return await contract.isAuthorizedIssuer(address);
+  return await getContract(provider).isAuthorizedIssuer(address);
 }
 
 export async function getIssuerName(provider, address) {
-  const contract = getContract(provider);
-  return await contract.issuerNames(address);
+  return await getContract(provider).issuerNames(address);
 }
 
 export async function getOwner(provider) {
-  const contract = getContract(provider);
-  return await contract.owner();
+  return await getContract(provider).owner();
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
