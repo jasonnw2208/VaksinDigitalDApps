@@ -1,6 +1,6 @@
 // src/components/AddRecord.jsx
 import { useState } from "react";
-import { addVaccineRecord, generateVaccineHash, generateNikHash, generateSalt, getNikHashByWallet } from "../utils/contract";
+import { addVaccineRecord, generateVaccineHash, generateNikHash, generateSalt, bindNikForPatient } from "../utils/contract";
 
 const JENIS_VAKSIN = [
   "Sinovac (CoronaVac)", "AstraZeneca (Vaxzevria)", "Pfizer-BioNTech (Comirnaty)",
@@ -110,13 +110,16 @@ export default function AddRecord({ signer, provider, issuerAddress }) {
         <div style={s.successBox}>
           <div style={s.successHeader}>🎉 NFT Sertifikat Berhasil Di-mint!</div>
           <div style={s.infoCard}>
-            <div style={s.infoCardTitle}>📋 Instruksi untuk Pasien</div>
+            <div style={s.infoCardTitle}>✅ NIK Otomatis Terhubung ke Wallet Pasien</div>
             <p style={s.infoCardText}>
-              Minta pasien buka tab <strong>"Sertifikat Saya"</strong> — NFT otomatis muncul di wallet mereka.
-              Atau minta pasien bind NIK di tab tersebut untuk melihat sertifikat by NIK.
+              NIK pasien sudah otomatis terhubung ke wallet mereka saat vaksin dicatat.
+              Minta pasien buka tab <strong>"Sertifikat Saya"</strong> — NFT langsung muncul.
             </p>
             <p style={s.infoCardText}><strong>NIK:</strong> <code style={s.code}>{result.nik}</code></p>
             <p style={s.infoCardText}><strong>Wallet:</strong> <code style={s.code}>{result.patientAddress}</code></p>
+            <div style={{marginTop:"8px",padding:"8px 10px",borderRadius:"6px",background:"rgba(16,185,129,0.08)",border:"1px solid rgba(16,185,129,0.2)",fontSize:"12px",color:"#6ee7b7"}}>
+              🔒 Binding NIK dilakukan oleh faskes setelah verifikasi KTP — tidak bisa dilakukan sendiri oleh pasien.
+            </div>
           </div>
           <InfoRow label="Data Hash" value={result.dataHash} mono copy />
           <InfoRow label="Transaction Hash" value={result.txHash} mono />

@@ -11,134 +11,142 @@ export const SUPPORTED_CHAINS = {
   137:   { name: "Polygon Mainnet", rpc: "https://polygon-rpc.com" },
 };
 
-export function getContract(signerOrProvider) {
-  return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signerOrProvider);
+export function getContract(sp) {
+  return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, sp);
 }
 
 // ── Hashing ───────────────────────────────────────────────────────────────────
 
-export function generateVaccineHash(nik, jenisVaksin, kodeProduksi, tanggal, salt) {
-  return ethers.keccak256(ethers.toUtf8Bytes(`${nik}|${jenisVaksin}|${kodeProduksi}|${tanggal}|${salt}`));
+export function generateVaccineHash(nik, jenis, kode, tgl, salt) {
+  return ethers.keccak256(ethers.toUtf8Bytes(`${nik}|${jenis}|${kode}|${tgl}|${salt}`));
 }
-
 export function generateNikHash(nik) {
   return ethers.keccak256(ethers.toUtf8Bytes(nik));
 }
+export function generateSalt() { return crypto.randomUUID(); }
 
-export function generateSalt() {
-  return crypto.randomUUID();
+/** Format token ID menjadi Certificate ID yang mudah dibaca */
+export function formatCertId(tokenId, timestamp) {
+  const year = new Date((timestamp || Date.now() / 1000) * 1000).getFullYear();
+  const id   = String(tokenId);
+  // Untuk ID kompleks (>6 digit), tampilkan langsung
+  // Untuk ID lama sequential, pad dengan 0
+  const formatted = id.length > 6 ? id : id.padStart(6, "0");
+  return `VAX-${year}-${formatted}`;
 }
 
 // ── Issuer ────────────────────────────────────────────────────────────────────
 
 export async function addVaccineRecord(signer, patient, dataHash, vaccineType, nikHash) {
-  const contract = getContract(signer);
-  const tx = await contract.addVaccineRecord(patient, dataHash, vaccineType, nikHash);
+  const tx = await getContract(signer).addVaccineRecord(patient, dataHash, vaccineType, nikHash);
   return await tx.wait();
 }
 
 export async function addBatchRoot(signer, root) {
-  const contract = getContract(signer);
-  const tx = await contract.addBatchRoot(root);
+  const tx = await getContract(signer).addBatchRoot(root);
   return await tx.wait();
 }
 
 export async function claimCertificate(signer, proof, root, dataHash, vaccineType, nikHash) {
-  const contract = getContract(signer);
-  const tx = await contract.claimCertificate(
-    proof, root, dataHash, vaccineType,
-    nikHash || ethers.ZeroHash
+  const tx = await getContract(signer).claimCertificate(
+    proof, root, dataHash, vaccineType, nikHash || ethers.ZeroHash
   );
   return await tx.wait();
 }
 
-export async function revokeCertificate(signer, tokenId) {
-  const contract = getContract(signer);
-  const tx = await contract.revokeCertificate(tokenId);
+/** Faskes request revoke — tidak langsung execute */
+export async function requestRevoke(signer, tokenId, reason) {
+  const tx = await getContract(signer).requestRevoke(tokenId, reason);
   return await tx.wait();
 }
 
-// ── Admin ─────────────────────────────────────────────────────────────────────
+// ── Admin / Owner ─────────────────────────────────────────────────────────────
 
 export async function authorizeIssuer(signer, address, facilityName) {
-  const contract = getContract(signer);
-  const tx = await contract.authorizeIssuer(address, facilityName);
+  const tx = await getContract(signer).authorizeIssuer(address, facilityName);
   return await tx.wait();
 }
 
 export async function removeIssuer(signer, address) {
-  const contract = getContract(signer);
-  const tx = await contract.removeIssuer(address);
+  const tx = await getContract(signer).removeIssuer(address);
+  return await tx.wait();
+}
+
+export async function approveRevoke(signer, requestId) {
+  const tx = await getContract(signer).approveRevoke(requestId);
+  return await tx.wait();
+}
+
+export async function rejectRevoke(signer, requestId, note) {
+  const tx = await getContract(signer).rejectRevoke(requestId, note);
+  return await tx.wait();
+}
+
+export async function emergencyRevoke(signer, tokenId, reason) {
+  const tx = await getContract(signer).emergencyRevoke(tokenId, reason);
+  return await tx.wait();
+}
+
+export async function undoRevoke(signer, tokenId, reason) {
+  const tx = await getContract(signer).undoRevoke(tokenId, reason);
   return await tx.wait();
 }
 
 export async function resetNikBinding(signer, walletAddress) {
-  const contract = getContract(signer);
-  const tx = await contract.resetNikBinding(walletAddress);
+  const tx = await getContract(signer).resetNikBinding(walletAddress);
   return await tx.wait();
 }
 
-// ── NIK Binding ───────────────────────────────────────────────────────────────
+// ── NIK ───────────────────────────────────────────────────────────────────────
 
-export async function bindNik(signer, nikHash) {
-  const contract = getContract(signer);
-  const tx = await contract.bindNik(nikHash);
+/**
+ * Faskes/Owner ikat NIK ke wallet pasien
+ * Hanya bisa dipanggil oleh authorized issuer atau owner
+ * Pasien tidak bisa bind NIK sendiri (mencegah klaim NIK orang lain)
+ */
+export async function bindNikForPatient(signer, patientAddress, nikHash) {
+  const tx = await getContract(signer).bindNikForPatient(patientAddress, nikHash);
   return await tx.wait();
 }
 
 export async function getTokensByNik(provider, nikHash) {
-  const contract = getContract(provider);
-  return await contract.getTokensByNik(nikHash);
+  return await getContract(provider).getTokensByNik(nikHash);
 }
 
-export async function getNikHashByWallet(provider, walletAddress) {
-  try {
-    const contract = getContract(provider);
-    return await contract.getNikHashByWallet(walletAddress);
-  } catch {
-    return null;
-  }
+export async function getNikHashByWallet(provider, wallet) {
+  try { return await getContract(provider).getNikHashByWallet(wallet); }
+  catch { return null; }
 }
 
-// ── NFT ───────────────────────────────────────────────────────────────────────
+// ── NFT / Records ─────────────────────────────────────────────────────────────
 
 export async function getTokenMetadata(provider, tokenId) {
   try {
-    const contract = getContract(provider);
-    const uri = await contract.tokenURI(tokenId);
-    if (uri.startsWith("data:application/json;base64,")) {
+    const uri = await getContract(provider).tokenURI(tokenId);
+    if (uri.startsWith("data:application/json;base64,"))
       return JSON.parse(atob(uri.split(",")[1]));
-    }
   } catch {}
   return { name: `VaxChain #${tokenId}`, image: "", attributes: [] };
 }
 
-/**
- * Ambil semua token ID yang dimiliki address
- * Menggunakan ownerOf loop (reliable untuk local/testnet)
- */
 export async function getOwnedCertificates(provider, address) {
   try {
-    const contract = getContract(provider);
-    const total    = Number(await contract.nextTokenId());
-    const owned    = [];
-    for (let i = 0; i < total; i++) {
+    const c      = getContract(provider);
+    // Gunakan getAllTokenIds() untuk dapat semua tokenId yang kompleks
+    const allIds = await c.getAllTokenIds();
+    const owned  = [];
+    for (const id of allIds) {
       try {
-        const owner = await contract.ownerOf(i);
-        if (owner.toLowerCase() === address.toLowerCase()) {
-          owned.push(i);
-        }
+        const owner = await c.ownerOf(id);
+        if (owner.toLowerCase() === address.toLowerCase()) owned.push(id);
       } catch {}
     }
     return owned;
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 }
 
 export async function getRecordByTokenId(provider, tokenId) {
-  const contract = getContract(provider);
-  const rec = await contract.records(tokenId);
+  const rec = await getContract(provider).records(tokenId);
   return {
     isValid:      Number(rec.status) === 1,
     issuer:       rec.issuer,
@@ -147,12 +155,44 @@ export async function getRecordByTokenId(provider, tokenId) {
     timestamp:    Number(rec.timestamp),
     statusCode:   Number(rec.status),
     dataHash:     rec.dataHash,
+    certId:       formatCertId(tokenId, Number(rec.timestamp)),
   };
 }
 
-// Alias untuk VerifyRecord.jsx
 export async function verifyRecord(provider, tokenId) {
   return await getRecordByTokenId(provider, Number(tokenId));
+}
+
+export async function getTokenHistory(provider, tokenId) {
+  try {
+    const entries = await getContract(provider).getTokenHistory(tokenId);
+    return entries.map(e => ({
+      action:    e.action,
+      actor:     e.actor,
+      note:      e.note,
+      timestamp: Number(e.timestamp),
+    }));
+  } catch { return []; }
+}
+
+export async function getPendingRevokeRequests(provider) {
+  try {
+    const c       = getContract(provider);
+    const ids     = await c.getPendingRequests();
+    const results = await Promise.all(ids.map(async id => {
+      const req = await c.revokeRequests(id);
+      return {
+        requestId:    Number(id),
+        tokenId:      Number(req.tokenId),
+        requestedBy:  req.requestedBy,
+        facilityName: req.facilityName,
+        reason:       req.reason,
+        timestamp:    Number(req.timestamp),
+        status:       Number(req.status), // 0=Pending
+      };
+    }));
+    return results.filter(r => r.status === 0);
+  } catch { return []; }
 }
 
 // ── Publik ────────────────────────────────────────────────────────────────────
@@ -160,26 +200,20 @@ export async function verifyRecord(provider, tokenId) {
 export async function checkIsIssuer(provider, address) {
   return await getContract(provider).isAuthorizedIssuer(address);
 }
-
 export async function getIssuerName(provider, address) {
   return await getContract(provider).issuerNames(address);
 }
-
 export async function getOwner(provider) {
   return await getContract(provider).owner();
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-export function formatTimestamp(unixTimestamp) {
-  if (!unixTimestamp) return "-";
-  return new Date(unixTimestamp * 1000).toLocaleString("id-ID", {
-    day: "2-digit", month: "long", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
+export function formatTimestamp(ts) {
+  if (!ts) return "-";
+  return new Date(ts * 1000).toLocaleString("id-ID", {
+    day:"2-digit", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit"
   });
 }
-
 export function shortAddress(addr) {
   if (!addr) return "-";
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  return `${addr.slice(0,6)}...${addr.slice(-4)}`;
 }
