@@ -1,8 +1,4 @@
 // src/utils/web3auth.js
-// Web3Auth dipakai HANYA untuk Google OAuth (nama, email, foto).
-// Semua interaksi blockchain pakai JsonRpcProvider langsung ke Hardhat.
-// Wallet di-derive deterministik dari Google UID → email yang sama = address yang sama.
-
 import { Web3Auth } from "@web3auth/modal";
 import { ethers } from "ethers";
 
@@ -60,33 +56,20 @@ export async function logoutWeb3Auth() {
 async function _buildSession(web3auth) {
   const userInfo = await web3auth.getUserInfo();
 
-  // ── Derive wallet deterministik dari Google UID ──────────────────────────
-  // verifierId = Google sub (unique per akun Google, tidak berubah)
+  // Derive wallet deterministik dari Google/social UID
   const seed       = "vaxchain-local-" + (userInfo.verifierId || userInfo.email || "unknown");
   const privateKey = ethers.keccak256(ethers.toUtf8Bytes(seed));
 
-  // ── Provider langsung ke Hardhat lokal ───────────────────────────────────
   const provider = new ethers.JsonRpcProvider(RPC_TARGET);
   const signer   = new ethers.Wallet(privateKey, provider);
   const address  = signer.address;
 
-  // ── Auto-fund wallet di Hardhat (gratis, tidak perlu ETH asli) ───────────
+  // Auto-fund di Hardhat
   try {
-    await provider.send("hardhat_setBalance", [
-      address,
-      "0x56BC75E2D63100000", // 100 ETH
-    ]);
-  } catch {
-    // Bukan Hardhat / tidak perlu (di testnet/mainnet abaikan)
-  }
+    await provider.send("hardhat_setBalance", [address, "0x56BC75E2D63100000"]);
+  } catch { /* bukan Hardhat, abaikan */ }
 
   const network = await provider.getNetwork();
 
-  return {
-    provider,
-    signer,
-    address,
-    chainId: Number(network.chainId),
-    userInfo, // { name, email, profileImage }
-  };
+  return { provider, signer, address, chainId: Number(network.chainId), userInfo };
 }
