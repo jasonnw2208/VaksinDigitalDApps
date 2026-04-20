@@ -1,7 +1,4 @@
 // scripts/deploy.js
-// Jalankan: npx hardhat run scripts/deploy.js --network localhost
-//       atau: npx hardhat run scripts/deploy.js --network polygonAmoy
-
 const { ethers } = require("hardhat");
 const fs = require("fs");
 const path = require("path");
@@ -11,46 +8,34 @@ async function main() {
   console.log("   DApps Rekam Vaksin Digital — Deploy Script");
   console.log("═══════════════════════════════════════════════════\n");
 
-  // Ambil info deployer
   const [deployer] = await ethers.getSigners();
-  console.log("📍 Deployer address :", deployer.address);
+  console.log(" Deployer address :", deployer.address);
 
   const balance = await ethers.provider.getBalance(deployer.address);
-  console.log("💰 Balance          :", ethers.formatEther(balance), "ETH/MATIC\n");
+  console.log(" Balance          :", ethers.formatEther(balance), "ETH/MATIC\n");
 
-  // Deploy kontrak
-  console.log("🚀 Deploying VaccineRegistry...");
+  console.log(" Deploying VaccineRegistry...");
   const VaccineRegistry = await ethers.getContractFactory("VaccineRegistry");
   const contract = await VaccineRegistry.deploy();
   await contract.waitForDeployment();
 
   const contractAddress = await contract.getAddress();
-  console.log("✅ VaccineRegistry deployed to:", contractAddress);
+  console.log(" VaccineRegistry deployed to:", contractAddress);
 
-  // Tambahkan beberapa issuer contoh (hanya untuk testing lokal)
   const network = await ethers.provider.getNetwork();
   if (network.chainId === 31337n) {
-    console.log("\n📋 Adding sample issuers for local testing...");
+    console.log("\n Adding sample issuers for local testing...");
     const signers = await ethers.getSigners();
 
-    // Signer[1] = RSCM
-    await contract.authorizeIssuer(
-      signers[1].address,
-      "RSUP Dr. Cipto Mangunkusumo"
-    );
-    console.log("  ✅ RSUP Dr. Cipto Mangunkusumo:", signers[1].address);
+    await contract.authorizeIssuer(signers[1].address, "RSUP Dr. Cipto Mangunkusumo");
+    console.log("   RSUP Dr. Cipto Mangunkusumo:", signers[1].address);
 
-    // Signer[2] = Puskesmas
-    await contract.authorizeIssuer(
-      signers[2].address,
-      "Puskesmas Kebayoran Baru"
-    );
-    console.log("  ✅ Puskesmas Kebayoran Baru   :", signers[2].address);
+    await contract.authorizeIssuer(signers[2].address, "Puskesmas Kebayoran Baru");
+    console.log("   Puskesmas Kebayoran Baru   :", signers[2].address);
   }
 
-  // ─── Simpan ABI + address ke folder frontend ───────────────────────────
+  // Simpan ABI + address ke folder frontend
   const artifact = await artifacts.readArtifact("VaccineRegistry");
-
   const deploymentInfo = {
     address:   contractAddress,
     network:   network.chainId.toString(),
@@ -59,7 +44,6 @@ async function main() {
     abi:       artifact.abi,
   };
 
-  // Tulis ke folder frontend/src/abi/
   const abiDir = path.join(__dirname, "../frontend/src/abi");
   if (!fs.existsSync(abiDir)) fs.mkdirSync(abiDir, { recursive: true });
 
@@ -67,24 +51,58 @@ async function main() {
     path.join(abiDir, "VaccineRegistry.json"),
     JSON.stringify(deploymentInfo, null, 2)
   );
-  console.log("\n📁 ABI & address saved to frontend/src/abi/VaccineRegistry.json");
+  console.log("\n ABI & address saved to frontend/src/abi/VaccineRegistry.json");
 
-  // Tulis juga .env untuk frontend
-  const envContent = `VITE_CONTRACT_ADDRESS=${contractAddress}\nVITE_CHAIN_ID=${network.chainId}\n`;
-  fs.writeFileSync(path.join(__dirname, "../frontend/.env"), envContent);
-  console.log("📁 .env saved to frontend/.env");
+  // ─── Update .env tanpa menghapus variabel lain yang sudah ada ───────────
+  const envPath = path.join(__dirname, "../frontend/.env");
+
+  // Baca .env yang ada (kalau ada)
+  let existingEnv = "";
+  if (fs.existsSync(envPath)) {
+    existingEnv = fs.readFileSync(envPath, "utf8");
+  }
+
+  // Parse baris-baris yang sudah ada ke dalam object
+  const envVars = {};
+  existingEnv.split("\n").forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) {
+      const idx = trimmed.indexOf("=");
+      if (idx > -1) {
+        const key = trimmed.substring(0, idx).trim();
+        const val = trimmed.substring(idx + 1).trim();
+        envVars[key] = val;
+      }
+    }
+  });
+
+  // Update/tambah hanya 2 variabel yang berkaitan dengan deploy
+  envVars["VITE_CONTRACT_ADDRESS"] = contractAddress;
+  envVars["VITE_CHAIN_ID"]         = network.chainId.toString();
+
+  // Pastikan variabel Web3Auth ada (isi default kalau belum ada)
+  if (!envVars["VITE_CHAIN_NAME"]) envVars["VITE_CHAIN_NAME"] = "Hardhat Local";
+  if (!envVars["VITE_RPC_URL"])    envVars["VITE_RPC_URL"]    = "http://127.0.0.1:8545";
+  if (!envVars["VITE_WEB3AUTH_CLIENT_ID"]) envVars["VITE_WEB3AUTH_CLIENT_ID"] = "YOUR_WEB3AUTH_CLIENT_ID_HERE";
+
+  // Tulis kembali semua variabel
+  const newEnvContent = Object.entries(envVars)
+    .map(([k, v]) => `${k}=${v}`)
+    .join("\n") + "\n";
+
+  fs.writeFileSync(envPath, newEnvContent);
+  console.log(" .env updated (variabel lain tetap tersimpan)");
 
   console.log("\n═══════════════════════════════════════════════════");
-  console.log("✅ DEPLOYMENT BERHASIL!");
+  console.log(" DEPLOYMENT BERHASIL!");
   console.log("   Contract address:", contractAddress);
-  console.log("\n📌 Langkah selanjutnya:");
-  console.log("   1. cd frontend && npm install && npm run dev");
+  console.log("\n Langkah selanjutnya:");
+  console.log("   1. cd frontend && npm run dev");
   console.log("   2. Buka browser: http://localhost:5173");
-  console.log("   3. Connect MetaMask ke jaringan yang sesuai");
   console.log("═══════════════════════════════════════════════════");
 }
 
 main().catch((error) => {
-  console.error("❌ Deploy gagal:", error);
+  console.error(" Deploy gagal:", error);
   process.exit(1);
 });
