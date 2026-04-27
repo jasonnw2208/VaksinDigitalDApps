@@ -1,0 +1,1 @@
+const _={WALLET_GET_CAPABILITIES:"wallet_getCapabilities",WALLET_SEND_CALLS:"wallet_sendCalls",WALLET_GET_CALLS_STATUS:"wallet_getCallsStatus",WALLET_SHOW_CALLS_STATUS:"wallet_showCallsStatus"};export{_ as E};
