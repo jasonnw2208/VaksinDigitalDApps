@@ -24,11 +24,11 @@ async function main() {
   const tx = await contract.transferOwnership(GOOGLE_WALLET);
   await tx.wait();
 
-  console.log("\n✅ Ownership berhasil dipindah ke:", GOOGLE_WALLET);
-  console.log("   Logout dari UI → login ulang dengan Google → Owner ✅");
+  console.log("\nOwnership berhasil dipindah ke:", GOOGLE_WALLET);
+  console.log("   Logout dari UI → login ulang dengan Google → Owner");
 }
 
 main().catch((e) => {
-  console.error("❌ Gagal:", e.message);
+  console.error("Gagal:", e.message);
   process.exit(1);
 });

@@ -103,7 +103,7 @@ export default function App() {
           {chainInfo && <div style={st.chainBadge}><span style={{...st.dot,background:"#10b981"}}/>{chainInfo.name}</div>}
           {!session ? (
             <button style={st.btnLogin} onClick={handleLogin} disabled={connecting}>
-              {connecting ? <span style={st.spinner}/> : "🔐"}
+              {connecting ? <span style={st.spinner}/> : ""}
               {connecting ? "Menghubungkan..." : "Masuk"}
             </button>
           ) : (
@@ -124,7 +124,7 @@ export default function App() {
       </header>
 
       {error && (
-        <div style={st.errorBanner}>⚠️ {error}
+        <div style={st.errorBanner}> {error}
           <button onClick={()=>setError("")} style={st.errorClose}>✕</button>
         </div>
       )}
@@ -137,7 +137,7 @@ export default function App() {
             Platform verifikasi sertifikat vaksin berbasis blockchain.<br/>
             Sertifikat sebagai NFT Soulbound — permanen, terverifikasi, tidak bisa dipalsukan.
           </p>
-          <button style={st.btnLoginLarge} onClick={handleLogin}>🔐 Masuk dengan Akun Sosial</button>
+          <button style={st.btnLoginLarge} onClick={handleLogin}>Masuk dengan Akun Sosial</button>
           <p style={st.loginNote}>Login dengan Google, X, Facebook, atau Email.<br/>Wallet blockchain dibuat otomatis — tidak perlu MetaMask.</p>
           <div style={st.contractInfo}>
             <span style={st.contractLabel}>Contract:</span>
@@ -150,7 +150,7 @@ export default function App() {
         <main style={st.main} className="fade-in">
           {facilityName && (
             <div style={st.facilityBanner}>
-              🏥 Login sebagai <strong>{facilityName}</strong>{isOwner && " · Administrator Sistem"}
+              Login sebagai <strong>{facilityName}</strong>{isOwner && " · Administrator Sistem"}
             </div>
           )}
           <nav style={st.tabNav}>
