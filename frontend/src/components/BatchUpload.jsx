@@ -106,14 +106,14 @@ export default function BatchUpload({ signer }) {
 
   return (
     <div style={s.container}>
-      <h2 style={s.title}><span>📦</span> Batch Upload Vaksin (Merkle Tree)</h2>
+      <h2 style={s.title}><span></span> Batch Upload Vaksin (Merkle Tree)</h2>
       <p style={s.subtitle}>
         Upload banyak data vaksin sekaligus. Lebih hemat gas — hanya 1 transaksi untuk semua data.
         Pasien klaim NFT mereka via tab <strong>"Sertifikat Saya"</strong>.
       </p>
 
       <div style={s.infoBox}>
-        💡 <strong>Cara kerja:</strong> Data di-hash → Merkle Tree dibuat → Root di-upload ke blockchain (1 tx).
+        <strong>Cara kerja:</strong> Data di-hash → Merkle Tree dibuat → Root di-upload ke blockchain (1 tx).
         Proof disimpan lokal → pasien buka app → klaim NFT otomatis muncul.
       </div>
 
@@ -170,7 +170,7 @@ export default function BatchUpload({ signer }) {
 
       <button style={s.addRowBtn} onClick={addRow}>+ Tambah Baris</button>
 
-      {errorMsg && <div style={s.errorBox}>⚠️ {errorMsg}</div>}
+      {errorMsg && <div style={s.errorBox}>{errorMsg}</div>}
 
       <button
         style={{...s.uploadBtn, opacity: (status==="building"||status==="uploading") ? 0.7 : 1}}
@@ -184,7 +184,7 @@ export default function BatchUpload({ signer }) {
       {/* ── Hasil ────────────────────────────────────────────────────────── */}
       {status === "success" && result && (
         <div style={s.successBox}>
-          <div style={s.successHeader}>🎉 Batch Berhasil Di-upload!</div>
+          <div style={s.successHeader}>Batch Berhasil Di-upload!</div>
           <div style={s.statRow}>
             <div style={s.stat}><div style={s.statNum}>{result.count}</div><div style={s.statLabel}>Pasien</div></div>
             <div style={s.stat}><div style={s.statNum}>1</div><div style={s.statLabel}>Transaksi</div></div>
@@ -195,13 +195,13 @@ export default function BatchUpload({ signer }) {
           <InfoRow label="Transaction Hash" value={result.txHash} mono />
 
           <div style={s.claimNote}>
-            📱 <strong>Instruksi untuk pasien:</strong> Minta setiap pasien buka aplikasi VaxChain,
+            <strong>Instruksi untuk pasien:</strong> Minta setiap pasien buka aplikasi VaxChain,
             login dengan akun sosial mereka, lalu buka tab <strong>"Sertifikat Saya"</strong>.
             Klaim NFT akan muncul otomatis — klik <em>"Klaim NFT"</em> untuk mendapatkan sertifikat.
           </div>
 
           <div style={s.proofSection}>
-            <div style={s.proofTitle}>📋 Proof per Pasien (untuk referensi)</div>
+            <div style={s.proofTitle}>Proof per Pasien (untuk referensi)</div>
             {result.claims.map((c, i) => (
               <div key={i} style={s.proofItem}>
                 <div style={s.proofNik}>Pasien {i+1} — NIK: {c.nik} — {c.vaccineType}</div>
@@ -224,7 +224,7 @@ function InfoRow({ label, value, mono, copy }) {
         <div style={{...s.infoValue, fontFamily: mono?"'JetBrains Mono',monospace":"inherit"}}>{value}</div>
         {copy && (
           <button style={s.copyBtn} onClick={()=>{navigator.clipboard.writeText(value);setCopied(true);setTimeout(()=>setCopied(false),2000)}}>
-            {copied?"✓":"⎘"}
+            {copied?"✓":" "}
           </button>
         )}
       </div>

@@ -83,15 +83,15 @@ export default function VerifyRecord({ provider }) {
   }
 
   const sc = {
-    valid:    { bg:"rgba(16,185,129,0.08)",  border:"rgba(16,185,129,0.3)",  color:"#10b981", icon:"✅", text:"SERTIFIKAT VALID" },
-    notfound: { bg:"rgba(239,68,68,0.08)",   border:"rgba(239,68,68,0.3)",   color:"#ef4444", icon:"❌", text:"TOKEN TIDAK DITEMUKAN" },
-    revoked:  { bg:"rgba(245,158,11,0.08)",  border:"rgba(245,158,11,0.3)",  color:"#f59e0b", icon:"⚠️", text:"SERTIFIKAT DIREVOKE" },
-    error:    { bg:"rgba(239,68,68,0.08)",   border:"rgba(239,68,68,0.3)",   color:"#ef4444", icon:"⚠️", text:"ERROR" },
+    valid:    { bg:"rgba(16,185,129,0.08)",  border:"rgba(16,185,129,0.3)",  color:"#10b981", icon:" ", text:"SERTIFIKAT VALID" },
+    notfound: { bg:"rgba(239,68,68,0.08)",   border:"rgba(239,68,68,0.3)",   color:"#ef4444", icon:" ", text:"TOKEN TIDAK DITEMUKAN" },
+    revoked:  { bg:"rgba(245,158,11,0.08)",  border:"rgba(245,158,11,0.3)",  color:"#f59e0b", icon:" ", text:"SERTIFIKAT DIREVOKE" },
+    error:    { bg:"rgba(239,68,68,0.08)",   border:"rgba(239,68,68,0.3)",   color:"#ef4444", icon:" ", text:"ERROR" },
   }[status] || {};
 
   return (
     <div style={s.container}>
-      <h2 style={s.title}><span style={s.titleIcon}>🔍</span>Verifikasi Sertifikat Vaksin</h2>
+      <h2 style={s.title}><span style={s.titleIcon}></span>Verifikasi Sertifikat Vaksin</h2>
       <p style={s.subtitle}>
         Masukkan <strong>Token ID</strong> atau <strong>scan QR code</strong> dari sertifikat untuk verifikasi.
       </p>
@@ -106,7 +106,7 @@ export default function VerifyRecord({ provider }) {
             placeholder="Token ID (contoh: 0)" type="number" min="0" />
         </div>
         <button style={s.scanBtn} onClick={scanning ? stopScanner : startScanner}>
-          {scanning ? "⏹ Stop Scan" : "📷 Scan QR"}
+          {scanning ? "Stop Scan" : "Scan QR"}
         </button>
         <button style={{...s.btn, opacity: status==="loading" ? 0.7 : 1}}
           onClick={() => handleVerify()} disabled={status==="loading"}>
@@ -118,7 +118,7 @@ export default function VerifyRecord({ provider }) {
       {scanning && (
         <div style={s.scannerBox}>
           <div style={s.scannerHeader}>
-            📷 Arahkan kamera ke QR Code sertifikat
+            Arahkan kamera ke QR Code sertifikat
           </div>
           <div id="qr-reader" ref={scannerRef} style={s.scannerView}/>
           <div style={s.scannerHint}>
@@ -127,7 +127,7 @@ export default function VerifyRecord({ provider }) {
         </div>
       )}
 
-      {errorMsg && <div style={s.errorBox}>⚠️ {errorMsg}</div>}
+      {errorMsg && <div style={s.errorBox}>{errorMsg}</div>}
 
       {/* ── Hasil ────────────────────────────────────────────────────────── */}
       {result !== null && status !== "loading" && (
@@ -174,7 +174,7 @@ export default function VerifyRecord({ provider }) {
           {/* History */}
           {history.length > 0 && (
             <div style={s.historySection}>
-              <div style={s.historyTitle}>📋 Riwayat Sertifikat</div>
+              <div style={s.historyTitle}>Riwayat Sertifikat</div>
               <div style={s.historyList}>
                 {history.map((h, i) => (
                   <div key={i} style={s.historyItem}>
@@ -192,7 +192,7 @@ export default function VerifyRecord({ provider }) {
       )}
 
       <div style={s.infoPanel}>
-        <div style={s.infoPanelTitle}>ℹ️ Cara Mendapatkan Token ID</div>
+        <div style={s.infoPanelTitle}>Cara Mendapatkan Token ID</div>
         <div style={s.infoPanelBody}>
           Scan QR code dari sertifikat digital, atau lihat Token ID di tab
           "Sertifikat Saya" → klik sertifikat → Token ID tertera di detail.
@@ -218,7 +218,7 @@ function actionIcon(action) {
   if (action.includes("Restored")) return "🔵";
   if (action.includes("Request"))  return "🟡";
   if (action.includes("Rejected")) return "⚫";
-  return "⚪";
+  return "";
 }
 
 function DetailRow({ label, value, mono }) {

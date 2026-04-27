@@ -68,7 +68,7 @@ export default function AdminPanel({ signer, provider }) {
   return (
     <div style={s.container}>
       <h2 style={s.title}>
-        <span style={s.titleIcon}>⚙️</span>
+        <span style={s.titleIcon}></span>
         Panel Administrator
       </h2>
       <p style={s.subtitle}>
@@ -119,7 +119,7 @@ export default function AdminPanel({ signer, provider }) {
       </div>
 
       {errorMsg && (
-        <div style={s.errorBox}>⚠️ {errorMsg}</div>
+        <div style={s.errorBox}>{errorMsg}</div>
       )}
 
       <button
@@ -140,7 +140,7 @@ export default function AdminPanel({ signer, provider }) {
           {result.type === "add" && (
             <>
               <div style={{ ...s.resultTitle, color: "#10b981" }}>
-                ✅ Issuer Berhasil Didaftarkan
+                Issuer Berhasil Didaftarkan
               </div>
               <InfoRow label="Fasilitas" value={result.name} />
               <InfoRow label="Alamat" value={result.address} mono />
@@ -150,7 +150,7 @@ export default function AdminPanel({ signer, provider }) {
           {result.type === "remove" && (
             <>
               <div style={{ ...s.resultTitle, color: "#ef4444" }}>
-                ✅ Issuer Berhasil Dihapus
+                Issuer Berhasil Dihapus
               </div>
               <InfoRow label="Alamat" value={result.address} mono />
               <InfoRow label="Tx Hash" value={result.txHash} mono />
@@ -162,7 +162,7 @@ export default function AdminPanel({ signer, provider }) {
                 ...s.resultTitle,
                 color: result.isAuth ? "#10b981" : "#ef4444",
               }}>
-                {result.isAuth ? "✅ Terdaftar sebagai Authorized Issuer" : "❌ Bukan Authorized Issuer"}
+                {result.isAuth ? "Terdaftar sebagai Authorized Issuer" : "Bukan Authorized Issuer"}
               </div>
               <InfoRow label="Alamat" value={result.address} mono />
               {result.name && <InfoRow label="Nama Fasilitas" value={result.name} />}
@@ -173,7 +173,7 @@ export default function AdminPanel({ signer, provider }) {
 
       {/* ── Penjelasan sistem ──────────────────────────────────────────── */}
       <div style={s.infoPanel}>
-        <div style={s.infoPanelTitle}>📋 Sistem Otorisasi Fasilitas Kesehatan</div>
+        <div style={s.infoPanelTitle}>Sistem Otorisasi Fasilitas Kesehatan</div>
         <ul style={s.infoList}>
           <li>Hanya <strong>Owner</strong> (deployer kontrak) yang bisa mendaftarkan issuer baru.</li>
           <li><strong>Authorized Issuer</strong> adalah wallet fasilitas kesehatan yang berhak mencatat dan merevoke sertifikat.</li>

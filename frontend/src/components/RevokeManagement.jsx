@@ -80,7 +80,7 @@ export default function RevokeManagement({ signer, provider }) {
 
   return (
     <div style={s.container}>
-      <h2 style={s.title}><span>⚖️</span> Revoke Management</h2>
+      <h2 style={s.title}><span></span> Revoke Management</h2>
       <p style={s.subtitle}>
         Review permintaan revoke dari faskes. Approve untuk eksekusi, atau reject dengan alasan.
         Owner juga bisa emergency revoke dan undo revoke.
@@ -89,7 +89,7 @@ export default function RevokeManagement({ signer, provider }) {
       {/* ── Pending Requests ───────────────────────────────────────────────── */}
       <div style={s.section}>
         <div style={s.sectionTitle}>
-          📬 Pending Revoke Requests
+          Pending Revoke Requests
           <span style={s.badge}>{requests.length}</span>
           <button style={s.refreshBtn} onClick={loadRequests}>🔄 Refresh</button>
         </div>
@@ -97,7 +97,7 @@ export default function RevokeManagement({ signer, provider }) {
         {loading ? (
           <div style={s.center}><span style={s.spinner}/> Memuat...</div>
         ) : requests.length === 0 ? (
-          <div style={s.empty}>✅ Tidak ada permintaan revoke yang pending</div>
+          <div style={s.empty}>Tidak ada permintaan revoke yang pending</div>
         ) : (
           <div style={s.requestList}>
             {requests.map(req => (
@@ -123,7 +123,7 @@ export default function RevokeManagement({ signer, provider }) {
                     onClick={() => handleApprove(req.requestId)}
                     disabled={processing===req.requestId}
                   >
-                    {processing===req.requestId ? "Memproses..." : "✅ Approve Revoke"}
+                    {processing===req.requestId ? "Memproses..." : "Approve Revoke"}
                   </button>
 
                   {showReject === req.requestId ? (
@@ -151,7 +151,7 @@ export default function RevokeManagement({ signer, provider }) {
 
       {/* ── Emergency Revoke ───────────────────────────────────────────────── */}
       <div style={s.section}>
-        <div style={s.sectionTitle}>🚨 Emergency Revoke (Langsung)</div>
+        <div style={s.sectionTitle}>Emergency Revoke (Langsung)</div>
         <p style={s.sectionDesc}>
           Revoke tanpa perlu request dari faskes. Gunakan hanya untuk kasus mendesak.
         </p>
@@ -166,7 +166,7 @@ export default function RevokeManagement({ signer, provider }) {
 
       {/* ── Undo Revoke ────────────────────────────────────────────────────── */}
       <div style={s.section}>
-        <div style={s.sectionTitle}>↩️ Undo Revoke (Kembalikan ke Valid)</div>
+        <div style={s.sectionTitle}>↩Undo Revoke (Kembalikan ke Valid)</div>
         <p style={s.sectionDesc}>
           Kembalikan sertifikat yang sudah direvoke menjadi Valid kembali.
           Semua aksi tercatat di riwayat sertifikat.
@@ -176,7 +176,7 @@ export default function RevokeManagement({ signer, provider }) {
             value={undoId} onChange={e => setUndoId(e.target.value)} />
           <input style={{...s.actionInput, flex:2}} placeholder="Alasan pemulihan..."
             value={undoReason} onChange={e => setUndoReason(e.target.value)} />
-          <button style={s.undoBtn} onClick={handleUndo}>↩️ Undo</button>
+          <button style={s.undoBtn} onClick={handleUndo}> Undo</button>
         </div>
       </div>
 
@@ -184,8 +184,8 @@ export default function RevokeManagement({ signer, provider }) {
       {actionResult && (
         <div style={s.resultBox}>
           {actionResult.type === "revoke"
-            ? `✅ Token #${actionResult.tokenId} berhasil direvoke!`
-            : `↩️ Token #${actionResult.tokenId} berhasil dikembalikan ke Valid!`}
+            ? `Token #${actionResult.tokenId} berhasil direvoke!`
+            : `↩Token #${actionResult.tokenId} berhasil dikembalikan ke Valid!`}
           <div style={{fontSize:"11px",color:"#64748b",marginTop:"4px",fontFamily:"monospace"}}>
             Tx: {actionResult.txHash}
           </div>

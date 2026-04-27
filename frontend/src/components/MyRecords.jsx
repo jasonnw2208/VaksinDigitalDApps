@@ -126,7 +126,7 @@ export default function MyRecords({ signer, provider, address }) {
     const isBind = step === "bind";
     return (
       <div style={s.container}>
-        <h2 style={s.title}>🪪 {isBind ? "Hubungkan NIK ke Akun Ini" : "Masukkan NIK Anda"}</h2>
+        <h2 style={s.title}>{isBind ? "Hubungkan NIK ke Akun Ini" : "Masukkan NIK Anda"}</h2>
         <p style={s.subtitle}>
           {isBind
             ? "Akun Anda belum terhubung ke NIK manapun. Masukkan NIK Anda untuk melihat sertifikat vaksin."
@@ -134,7 +134,7 @@ export default function MyRecords({ signer, provider, address }) {
         </p>
 
         <div style={s.bindCard}>
-          <div style={s.bindIcon}>{isBind ? "🔗" : "🔐"}</div>
+          <div style={s.bindIcon}>{isBind ? "" : ""}</div>
           <div style={s.bindTitle}>{isBind ? "Hubungkan NIK" : "Verifikasi NIK"}</div>
           <div style={s.bindDesc}>
             {isBind
@@ -151,20 +151,20 @@ export default function MyRecords({ signer, provider, address }) {
             maxLength={16}
           />
 
-          {errorMsg && <div style={s.errorBox}>⚠️ {errorMsg}</div>}
-          {successMsg && <div style={s.successMini}>✅ {successMsg}</div>}
+          {errorMsg && <div style={s.errorBox}>{errorMsg}</div>}
+          {successMsg && <div style={s.successMini}>{successMsg}</div>}
 
           <button
             style={{ ...s.btn, opacity: loading ? 0.7 : 1 }}
             onClick={isBind ? handleBind : handleVerifyNik}
             disabled={loading}
           >
-            {loading ? <><span style={s.spinner} />Memproses...</> : isBind ? "🔗 Hubungkan NIK" : "🔓 Akses Sertifikat"}
+            {loading ? <><span style={s.spinner} />Memproses...</> : isBind ? "Hubungkan NIK" : "Akses Sertifikat"}
           </button>
 
           {isBind && (
             <div style={s.noteBox}>
-              💡 <strong>Catatan:</strong> Satu akun Google hanya bisa dihubungkan ke satu NIK.
+              <strong>Catatan:</strong> Satu akun Google hanya bisa dihubungkan ke satu NIK.
               Jika lupa akun, hubungi faskes untuk reset dan gunakan akun baru.
             </div>
           )}
@@ -176,7 +176,7 @@ export default function MyRecords({ signer, provider, address }) {
   // step === "records"
   return (
     <div style={s.container}>
-      <h2 style={s.title}>📋 Sertifikat Vaksin Saya</h2>
+      <h2 style={s.title}>Sertifikat Vaksin Saya</h2>
       <div style={s.nikBadge}>
         <span style={s.nikLabel}>NIK</span>
         <span style={s.nikValue}>{nik.replace(/(\d{6})(\d{6})(\d{4})/, "$1 $2 $3")}</span>
@@ -228,7 +228,7 @@ function CertificateCard({ record, index }) {
   }
 
   const statusColor = record.isValid ? "#10b981" : record.statusCode === 2 ? "#ef4444" : "#64748b";
-  const statusLabel = record.isValid ? "✅ Valid" : record.statusCode === 2 ? "❌ Dicabut" : "⚠️ Tidak Ditemukan";
+  const statusLabel = record.isValid ? "✅ Valid" : record.statusCode === 2 ? "❌ Dicabut" : "Tidak Ditemukan";
 
   return (
     <div style={s.card}>
@@ -252,7 +252,7 @@ function CertificateCard({ record, index }) {
 
       {/* Toggle QR */}
       <button style={s.qrBtn} onClick={() => setExpanded(!expanded)}>
-        {expanded ? "▲ Sembunyikan QR Code" : "📱 Tampilkan QR Code untuk Verifikasi"}
+        {expanded ? "▲ Sembunyikan QR Code" : "Tampilkan QR Code untuk Verifikasi"}
       </button>
 
       {expanded && (

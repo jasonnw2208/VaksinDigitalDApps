@@ -65,13 +65,13 @@ export default function CertificateGallery({ session }) {
 
     try {
       await claimCertificate(signer, claim.proof, claim.root, claim.dataHash, claim.vaccineType, ZERO_HASH);
-      setProofStep("✅ NFT Berhasil Diklaim!");
+      setProofStep("NFT Berhasil Diklaim!");
       await new Promise(r => setTimeout(r, 1000));
       const stored  = JSON.parse(sessionStorage.getItem("vax_claims") || "[]");
       sessionStorage.setItem("vax_claims", JSON.stringify(stored.filter(c => c.dataHash !== claim.dataHash)));
       await loadAll();
     } catch (e) {
-      setProofStep("❌ Gagal: " + (e.reason || e.message));
+      setProofStep("Gagal: " + (e.reason || e.message));
       await new Promise(r => setTimeout(r, 2000));
     } finally {
       setClaiming(null); setProofStep(null);
@@ -89,14 +89,14 @@ export default function CertificateGallery({ session }) {
       <div style={nikBound ? s.nikBound : s.nikUnbound}>
         {nikBound ? (
           <>
-            🪪 <strong>NIK terverifikasi</strong> — Faskes sudah memvalidasi identitas Anda ✅
+            <strong>NIK terverifikasi</strong> — Faskes sudah memvalidasi identitas Anda ✅
             <span style={s.nikSub}>
               Sertifikat vaksin yang dicatat oleh faskes akan muncul otomatis di bawah.
             </span>
           </>
         ) : (
           <>
-            ℹ️ <strong>NIK belum terhubung</strong>
+            <strong>NIK belum terhubung</strong>
             <span style={s.nikSub}>
               Kunjungi fasilitas kesehatan dan minta petugas untuk menghubungkan NIK kamu ke akun ini.
               Petugas akan memverifikasi KTP kamu terlebih dahulu.
@@ -108,8 +108,8 @@ export default function CertificateGallery({ session }) {
       {/* ── Pending Merkle Claims ─────────────────────────────────────────── */}
       {pendingClaims.length > 0 && (
         <div style={s.pendingBox}>
-          <h3 style={s.pendingTitle}>🎁 {pendingClaims.length} Sertifikat Menunggu Diklaim</h3>
-          {proofStep && <div style={s.proofVisual}>🛠️ <strong>Merkle Verification:</strong> {proofStep}</div>}
+          <h3 style={s.pendingTitle}>{pendingClaims.length} Sertifikat Menunggu Diklaim</h3>
+          {proofStep && <div style={s.proofVisual}><strong>Merkle Verification:</strong> {proofStep}</div>}
           <div style={s.pendingList}>
             {pendingClaims.map(c => (
               <div key={c.dataHash} style={s.pendingItem}>
@@ -131,7 +131,7 @@ export default function CertificateGallery({ session }) {
       )}
 
       {/* ── NFT Gallery ──────────────────────────────────────────────────── */}
-      <h2 style={s.title}>📜 Sertifikat NFT Saya</h2>
+      <h2 style={s.title}>Sertifikat NFT Saya</h2>
 
       {certs.length === 0 ? (
         <div style={s.empty}>
@@ -149,7 +149,7 @@ export default function CertificateGallery({ session }) {
             <div key={cert.id} style={s.card} onClick={() => setSelectedCert(cert)}>
               {cert.image
                 ? <img src={cert.image} alt={cert.name} style={s.cardImg}/>
-                : <div style={s.cardImgPlaceholder}>🏥</div>}
+                : <div style={s.cardImgPlaceholder}></div>}
               <div style={s.cardBody}>
                 <div style={s.certIdSmall}>{cert.certId || `#${cert.id}`}</div>
                 <div style={s.cardSub}>{cert.vaccineType}</div>

@@ -1,0 +1,5 @@
+ 
+# Dependency folders
+artifacts/ 
+cache/
+node_modules/

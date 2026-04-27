@@ -31,7 +31,7 @@ export default function RevokeRecord({ signer }) {
 
   return (
     <div style={s.container}>
-      <h2 style={s.title}><span>🚫</span> Ajukan Permintaan Revoke</h2>
+      <h2 style={s.title}><span></span> Ajukan Permintaan Revoke</h2>
       <p style={s.subtitle}>
         Faskes tidak bisa langsung merevoke sertifikat. Permintaan akan dikirim ke <strong>Owner (Kemenkes)</strong>
         untuk di-approve atau ditolak. Owner juga bisa melakukan undo setelah revoke.
@@ -71,18 +71,18 @@ export default function RevokeRecord({ signer }) {
         </div>
       </div>
 
-      {errorMsg && <div style={s.errorBox}>⚠️ {errorMsg}</div>}
+      {errorMsg && <div style={s.errorBox}>{errorMsg}</div>}
 
       <button style={{...s.btn, opacity: status==="loading" ? 0.7 : 1}}
         onClick={handleRequest} disabled={status==="loading"}>
         {status==="loading"
           ? <><span style={s.spinner}/>Mengajukan Request...</>
-          : "📨 Ajukan Permintaan Revoke ke Owner"}
+          : "Ajukan Permintaan Revoke ke Owner"}
       </button>
 
       {status==="success" && result && (
         <div style={s.successBox}>
-          <div style={s.successHeader}>📨 Permintaan Revoke Berhasil Diajukan!</div>
+          <div style={s.successHeader}>Permintaan Revoke Berhasil Diajukan!</div>
           <p style={s.successText}>
             Permintaan telah tercatat di blockchain. Owner (Kemenkes) akan mereview
             dan melakukan approve atau reject melalui tab <strong>Admin → Revoke Management</strong>.

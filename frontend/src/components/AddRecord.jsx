@@ -91,7 +91,7 @@ export default function AddRecord({ signer, provider, issuerAddress }) {
 
   return (
     <div style={s.container}>
-      <h2 style={s.title}><span>💉</span> Catat Rekam Vaksin Baru</h2>
+      <h2 style={s.title}><span></span> Catat Rekam Vaksin Baru</h2>
       <p style={s.subtitle}>
         NFT sertifikat akan di-mint ke wallet pasien. NIK otomatis terhubung ke wallet
         pasien setelah pencatatan — <strong>pasien tidak perlu input NIK sendiri</strong>.
@@ -128,7 +128,7 @@ export default function AddRecord({ signer, provider, issuerAddress }) {
       <div style={s.formCard}>
         {/* Section: Identitas Pasien */}
         <div style={s.sectionHeader}>
-          <span style={s.sectionIcon}>🪪</span>
+          <span style={s.sectionIcon}></span>
           <div>
             <div style={s.sectionTitle}>Identitas Pasien</div>
             <div style={s.sectionDesc}>Diisi berdasarkan KTP fisik pasien yang sudah diverifikasi</div>
@@ -184,7 +184,7 @@ export default function AddRecord({ signer, provider, issuerAddress }) {
         </div>
 
         <div style={s.walletHelp}>
-          <div style={s.walletHelpTitle}>📱 Cara pasien dapatkan wallet address:</div>
+          <div style={s.walletHelpTitle}>Cara pasien dapatkan wallet address:</div>
           <ol style={s.walletHelpList}>
             <li>Pasien buka VaxChain di HP mereka</li>
             <li>Login dengan akun Google/sosial</li>
@@ -197,7 +197,7 @@ export default function AddRecord({ signer, provider, issuerAddress }) {
 
         {/* Section: Data Vaksin */}
         <div style={s.sectionHeader}>
-          <span style={s.sectionIcon}>💉</span>
+          <span style={s.sectionIcon}></span>
           <div>
             <div style={s.sectionTitle}>Data Vaksinasi</div>
             <div style={s.sectionDesc}>Detail vaksin yang diberikan</div>
@@ -240,7 +240,7 @@ export default function AddRecord({ signer, provider, issuerAddress }) {
           />
           <div>
             <div style={s.checkboxLabel}>
-              ✅ Saya konfirmasi bahwa KTP fisik pasien sudah diverifikasi secara langsung
+              Saya konfirmasi bahwa KTP fisik pasien sudah diverifikasi secara langsung
             </div>
             <div style={s.checkboxDesc}>
               NIK yang diinput sesuai dengan KTP asli pasien. Binding NIK tidak bisa dibatalkan
@@ -263,7 +263,7 @@ export default function AddRecord({ signer, provider, issuerAddress }) {
       >
         {status === "loading"
           ? <><span style={s.spinner}/>Minting NFT & Binding NIK...</>
-          : "✅ Catat Vaksin + Hubungkan NIK ke Wallet Pasien"}
+          : "Catat Vaksin + Hubungkan NIK ke Wallet Pasien"}
       </button>
 
       {/* ── Hasil Sukses ──────────────────────────────────────────────────── */}
@@ -275,7 +275,7 @@ export default function AddRecord({ signer, provider, issuerAddress }) {
             <div style={s.successItem}>
               <span style={s.successLabel}>Status NIK</span>
               <span style={{...s.successValue, color:"#10b981"}}>
-                🔗 Terhubung ke wallet pasien
+                Terhubung ke wallet pasien
               </span>
             </div>
             <div style={s.successItem}>
@@ -295,7 +295,7 @@ export default function AddRecord({ signer, provider, issuerAddress }) {
           </div>
 
           <div style={s.successNote}>
-            📱 <strong>Instruksi untuk pasien:</strong> Buka tab <strong>"Sertifikat Saya"</strong>
+            <strong>Instruksi untuk pasien:</strong> Buka tab <strong>"Sertifikat Saya"</strong>
             di app VaxChain — NFT sertifikat langsung muncul tanpa perlu input NIK lagi.
           </div>
 
@@ -304,7 +304,6 @@ export default function AddRecord({ signer, provider, issuerAddress }) {
             <span style={s.hashVal}>{result.txHash}</span>
             <button style={s.copyBtn}
               onClick={() => navigator.clipboard.writeText(result.txHash)}>
-              ⎘
             </button>
           </div>
         </div>
